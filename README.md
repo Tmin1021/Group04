@@ -10,25 +10,40 @@
 
 
 ## Data
-
+Currently, we collect daily data of VN30F1M in one month:
+```bash
+data_collection:
+  start: "2023-01-01"
+  end: "2023-02-01"
+  tickers: ["HPG", "VIC", "VNM"]
+```
  
 ### Data collection
-#### VCBF open-end fund financial portfolio
+- For testing the implementation, run:
+```bash
+python -m src.data.export_daily --help
+```
 
+- Download the database.json file from assignment 2 and put it in the project.
 
-#### Daily price, quantity of Vietnamese stocks
-
-#### Stocks financial portfolio data
+- To start collecting daily data, run:
+```bash
+python run_data_collection.py
+```
 
 ### Data Processing
-#### Extract VCBF open-end fund financial portfolio
-
-
-#### Monthly scores preprocessing
-
 
 ## Implementation
 ### Environment Setup
+1. Set up python virtual environment
+```bash
+python -m venv .venv
+source .venv/Scripts/activate # for Window Git Bash
+```
+2. Install the required packages
+```bash
+pip install -r requirements.txt
+```
 
 ### Data Collection
 
@@ -55,18 +70,6 @@
 
 
 ### Evaluation Metrics
-- Backtesting results are stored in the `<DATA_PATH>/backtest/` folder. 
-- Used metrics to compare with VNINDEX are: 
-  - Return on Investment (ROI)
-  - Maximum drawdown (MDD)
-  - Sharpe ratio (SR)
-  - Sortino ratio (SoR)
-  - Calmar ratio (CR)
-  - Votality (Vol)
-  - Max Time to Recover from a drawdown (MTR) in days
-- Other metrics:
-  - Cumulative annual growth rate (CAGR)
-  - Win rate: the percentage of winning trades over total trades.
 
 ### Parameters
 

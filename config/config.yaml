@@ -1,0 +1,56 @@
+# Database
+database_json: "database.json"
+
+# Project configuration
+data:
+  data_dir: data
+  daily_csv: daily_data.csv
+  financial_csv: financial_data.csv
+  monthly_features_csv: monthly_features.csv
+
+data_collection:
+  start: "2023-01-01"
+  end: "2023-02-01"
+  tickers: ["HPG", "VIC", "VNM"]
+
+# Backtest periods (edit to match your assignment)
+periods:
+  in_sample:
+    start: "2021-01-01"
+    end: "2022-12-31"
+  out_sample:
+    start: "2023-01-01"
+    end: "2023-12-31"
+
+universe:
+  # basic liquidity filter (using monthly mean daily volume)
+  min_avg_daily_volume: 50000
+  # optional: ignore too-low prices
+  min_price: 1.0
+
+features:
+  # momentum lookback in months, using month-end prices
+  mom_months: 3
+  # volatility lookback in trading days, using daily returns
+  vol_days: 60
+  # fundamentals are lagged by this many months (avoid look-ahead bias)
+  fundamentals_lag_months: 1
+
+model:
+  ridge_alpha: 10.0
+  train_window_months: 24
+  standardize: true
+
+portfolio:
+  top_n: 5
+  weight_scheme: "inv_vol"   # "equal" or "inv_vol"
+  max_weight: 0.35           # cap per position
+
+costs:
+  # proportional cost applied to turnover at rebalance (e.g., 0.15% = 0.0015)
+  commission: 0.0015
+
+benchmark:
+  # Optional: set to VNINDEX series file if you have it.
+  # Otherwise evaluation runs without benchmark.
+  vnindex_csv: null

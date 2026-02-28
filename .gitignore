@@ -174,4 +174,16 @@ cython_debug/
 .pypirc
 
 # working data directory
-data/
+# Ignore exported datasets (repo root)
+ /data/
+ /trading-data/
+ /data/**
+
+# Ignore secrets
+.env
+database.json
+
+# Ignore Python junk
+.venv/
+__pycache__/
+*.pyc
