@@ -10,7 +10,7 @@
 
 
 ## Data
-Currently, we collect daily data of VN30F1M in one month:
+Currently, we collect daily data of VN30F1M in one month based on the database from Assignment 2:
 ```bash
 data_collection:
   start: "2023-01-01"
