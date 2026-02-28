@@ -17,22 +17,6 @@ data_collection:
   end: "2023-02-01"
   tickers: ["HPG", "VIC", "VNM"]
 ```
- 
-### Data collection
-- For testing the implementation, run:
-```bash
-python -m src.data.export_daily --help
-```
-
-- Download the database.json file from assignment 2 and put it in the project.
-
-- To start collecting daily data, run:
-```bash
-python run_data_collection.py
-```
-
-### Data Processing
-
 ## Implementation
 ### Environment Setup
 1. Set up python virtual environment
@@ -46,7 +30,17 @@ pip install -r requirements.txt
 ```
 
 ### Data Collection
+- For testing the implementation, run:
+```bash
+python -m src.data.export_daily --help
+```
 
+- Download the database.json file from assignment 2 and put it in the project.
+
+- To start collecting daily data, run:
+```bash
+python run_data_collection.py
+```
 
 ### Data processing
 
