@@ -1,115 +1,133 @@
-# GROUP04 - Momentum Strategy
+# Abstract
 
-## Abstract
-This project implements a **Price Momentum** trading strategy using a simplified 6-step workflow for developing a trading algorithm:
-1) Form Algorithm Hypothesis  
-2) Data Collection  
-3) Data Processing / Feature Engineering  
-4) In-sample Backtesting  
-5) Optimization  
-6) Out-of-sample Backtesting  
+---
 
-We use daily market data to construct **monthly momentum & volatility features**, then run a **monthly rebalanced** backtest: at each month-end we select the **top-N tickers by momentum**, allocate weights (equal-weight or inverse-volatility), apply transaction costs based on turnover, and evaluate performance via metrics like **CAGR, volatility, Sharpe ratio, and max drawdown**.
+This project implements and evaluates a **Price Momentum** strategy on a Vietnam stock universe (example tickers: `HPG`, `VIC`, `VNM`). We follow a simplified **6-step** workflow (subset of the 9-step Algotrade framework): **Hypothesis → Data Collection → Data Processing → In-sample Backtest → Optimization → Out-of-sample Backtest**.
 
+Using daily market data, we build **monthly features** (momentum, volatility, liquidity, forward 1-month return). The backtest is **monthly rebalanced**: at each month-end date *t*, we select the **top-N tickers by momentum**, assign weights (equal-weight or inverse-volatility with a max-weight cap), hold for one month (*t → t+1*), and subtract **transaction cost proportional to turnover**. Performance is measured by metrics such as **CAGR, volatility, Sharpe ratio, max drawdown, and average turnover**.
 
-## Strategy Overview (Momentum)
-**Hypothesis:** assets that performed well over the recent past tend to keep performing well over a short horizon.
+# Introduction
 
-**Monthly rebalancing logic:**
-- On each month-end date **t**:
-  - compute momentum over a lookback window (e.g., `mom_months = 3`)
-  - rank tickers by momentum
-  - pick **top_n**
-  - assign weights:
-    - `equal` (equal weights), or
-    - `inv_vol` (inverse-vol weights using a daily-volatility lookback)
-  - hold from **t → t+1**, realizing the next-month forward return (`fwd_ret_1m`)
-  - subtract transaction cost proportional to **turnover**
+---
 
+This project tests whether **past relative performance** of stocks (momentum) can be used to form a systematic, rule-based portfolio that produces positive risk-adjusted returns in a simple monthly-rebalanced setting.
 
-## Installation
-### 1) Create a virtual environment
-```bash
-python3 -m venv .venv
-source .venv/bin/activate   # macOS/Linux
-# .venv\Scripts\activate    # Windows
+**Feature**
+
+- [x] Export daily data from database into CSV
+- [x] Process daily data into monthly features (momentum, volatility, forward return, liquidity)
+- [x] In-sample and out-of-sample backtesting (monthly rebalanced)
+- [x] Optimize hyperparameters via grid search (in-sample)
+- [x] Save outputs (returns/weights/metrics) for reporting
+- [ ] Add benchmark comparison (optional, if VNINDEX series is provided)
+- [ ] Paper trade / live trading
+
+**Installation**
+
+- Requirement: pip
+- Create and source new virtual environment in the current working directory with command
 ```
-
-### 2) Install dependencies
-```bash
+python -m venv .venv
+source .venv/Scripts/activate
+```
+- Install dependencies by:
+```
 pip install -r requirements.txt
 ```
 
+# Related Work
+Momentum has been widely studied in academic finance. This project is motivated by classic cross-sectional momentum evidence (buy recent winners / sell recent losers) and related momentum research in equities and other asset classes.
 
-## Configuration
-Edit `config/config.yaml` to control:
-- **data source / tickers** (`data_collection`)
-- **in-sample / out-of-sample periods** (`periods`)
-- **features** (e.g., `mom_months`, `vol_days`)
-- **portfolio rules** (`top_n`, `weight_scheme`, `max_weight`)
-- **costs** (`commission`)
-- **universe filters** (`min_avg_daily_volume`, `min_price`)
+# Trading (Algorithm) Hypotheses
+Stocks that have performed well over the recent past (e.g., last **3 months**) tend to continue outperforming over the next month, so selecting the **top-N momentum** stocks and rebalancing monthly can produce positive risk-adjusted returns (after costs) over a test period.
 
+# Data
+We export daily data from the provided database (derived from tick tables) and use it to compute monthly features for a momentum backtest.
 
-## Data
-### Data Collection
-This step pulls daily data from the database and saves it to:
-`data/processed/daily_data.csv`
+Default configuration (edit in `config/config.yaml`):
 
-Run:
-```bash
+- **Data export window** (`data_collection`):
+  - start: `2022-01-01`
+  - end: `2024-01-01`
+  - tickers: `["HPG", "VIC", "VNM"]`
+
+- **Backtest periods** (`periods`):
+  - In-sample: `2021-01-01` → `2022-12-31`
+  - Out-of-sample: `2023-01-01` → `2023-12-31`
+
+> Note: Make sure your `data_collection` window covers the dates you want to backtest (both in-sample and out-of-sample).
+
+## Data Collection
+- Put your `database.json` (credentials/config) in the project root (or update `database_json` in `config/config.yaml`).
+- Configure the data collection range and tickers in `config/config.yaml`, e.g.
+```
+data_collection:
+  start: "2022-01-01"
+  end: "2024-01-01"
+  tickers: ["HPG", "VIC", "VNM"]
+```
+- Run:
+```
 python run_data_collection.py
 ```
+- Output:
+  - `data/processed/daily_data.csv`
 
-Output:
-- `data/processed/daily_data.csv`
-
-
-### Data Processing
-This step converts daily data into a monthly feature table used by the strategy backtest:
-- momentum column: `mom_{mom_months}m`
-- volatility column: `vol_{vol_days}d`
-- forward return column: `fwd_ret_1m`
-- liquidity column: `avg_daily_volume`
+## Data Processing
+Daily data is transformed into a monthly feature table used by the strategy:
+- `mom_{mom_months}m`: momentum over a month-end lookback window (default `mom_months = 3`)
+- `vol_{vol_days}d`: volatility over a daily-return lookback (default `vol_days = 60`)
+- `avg_daily_volume`: liquidity proxy (monthly mean daily volume)
+- `fwd_ret_1m`: next-month forward return (used for evaluation)
 
 Run:
-```bash
+```
 python run_data_processing.py
 ```
-
 Output:
 - `data/processed/monthly_features.csv`
 
+# Implementation
+- **Data exporter**: `src/data/export_daily.py`
+  - Aggregates tick tables into daily close price and daily volume per ticker.
+- **Feature engineering**: `src/data/process_daily.py`
+  - Converts daily data into monthly snapshots + features.
+- **Backtest engine**: `src/backtest/momentum_backtest.py`
+  - Monthly rebalance:
+    - select top-N tickers by `mom_{mom_months}m`
+    - weight scheme: `equal` or `inv_vol`
+    - enforce `max_weight`
+    - apply transaction cost: `cost = commission * turnover`
+- **Optimization**: `src/optimize/optimize_momentum.py`
+  - Grid search on (optional): `mom_months`, `vol_days`, `top_n`, `weight_scheme`
+  - Select best by Sharpe (tie-break by CAGR)
 
-## Backtesting
-### In-sample Backtest
-Runs the baseline configuration defined in `config/config.yaml` and saves:
-- returns time series
-- monthly weights
-- prints metrics to console (CAGR, vol, Sharpe, max drawdown, avg turnover, etc.)
-
-Run:
-```bash
+# In-sample Backtesting
+Run the backtest driver:
+```
 python run_backtest.py
 ```
 
+This will:
+- ensure the required feature CSV exists (it will generate it if missing)
+- run **baseline** backtest for both in-sample and out-of-sample periods
+- print metrics to console
+
+## In-sample Backtesting Result
 Outputs (baseline):
 - `data/processed/result_in_sample/baseline_returns.csv`
 - `data/processed/result_in_sample/baseline_weights.csv`
-- `data/processed/result_out_sample/baseline_returns.csv`
-- `data/processed/result_out_sample/baseline_weights.csv`
 
+Metrics are printed to the console logs (CAGR, vol, Sharpe, max drawdown, avg turnover, etc.).
 
-## Optimization
-### Hyperparameter Search
-A simple grid search over parameters:
-- `mom_months`
-- `vol_days`
-- `top_n`
-- `weight_scheme`
+Example result table (fill after running):
+| Strategy (baseline) | Sharpe Ratio | Maximum Drawdown | CAGR |
+|---------------------|--------------|------------------|------|
+| Momentum            | TBD          | TBD              | TBD  |
 
-Run:
-```bash
+# Optimization
+Run in-sample optimization (grid search):
+```
 python run_optimization.py
 ```
 
@@ -117,43 +135,48 @@ Outputs:
 - `data/processed/optimization_results.csv`
 - `data/processed/best_params.yaml`
 
-
-## Out-of-sample Backtest
-### Evaluate Best Params on Out-of-sample
-After optimization, `run_backtest.py` will automatically detect `best_params.yaml` and run a second backtest tagged as **best**.
-
-Run:
-```bash
+To re-run backtest using the optimized parameters:
+```
 python run_backtest.py
 ```
 
+If `best_params.yaml` exists, `run_backtest.py` will automatically run an additional backtest tag named `best`.
+
+## Optimization Result
+- Inspect `data/processed/optimization_results.csv` to compare parameter sets.
+- The best parameters are saved to `data/processed/best_params.yaml` and used automatically by `run_backtest.py`.
+
+Typical columns in the optimization CSV include:
+- parameters: `mom_months`, `vol_days`, `top_n`, `weight_scheme`
+- metrics: `months`, `cagr`, `vol`, `sharpe`, `max_drawdown`, `avg_turnover`
+
+# Out-of-sample Backtesting
+After optimization, run:
+```
+python run_backtest.py
+```
+
+This will produce both baseline and best (if available) out-of-sample outputs.
+
+## Out-of-sample Backtesting Reuslt
+Outputs (baseline):
+- `data/processed/result_out_sample/baseline_returns.csv`
+- `data/processed/result_out_sample/baseline_weights.csv`
+
 Outputs (best, if `best_params.yaml` exists):
-- `data/processed/result_in_sample/best_returns.csv`
-- `data/processed/result_in_sample/best_weights.csv`
 - `data/processed/result_out_sample/best_returns.csv`
 - `data/processed/result_out_sample/best_weights.csv`
 
+Example result table (fill after running):
+| Strategy | Sharpe Ratio | Maximum Drawdown | CAGR |
+|----------|--------------|------------------|------|
+| Baseline | TBD          | TBD              | TBD  |
+| Best     | TBD          | TBD              | TBD  |
 
-## Notes / Troubleshooting
-- If you see `Missing daily CSV...`, run **data collection** first:
-  ```bash
-  python run_data_collection.py
-  ```
-- If you changed `mom_months` or `vol_days`, re-run:
-  ```bash
-  python run_data_processing.py
-  ```
-- If `weight_scheme = inv_vol`, make sure volatility lookback is valid and your feature file contains `vol_{vol_days}d`.
-- Universe filters (`min_avg_daily_volume`, `min_price`) can reduce the tradable set; if you get many “cash months”, loosen these thresholds.
+# Conclusion
+This repository provides a transparent end-to-end implementation of a monthly-rebalanced **Momentum Strategy**: data export → feature engineering → backtesting → optimization → out-of-sample evaluation. The final results depend on the chosen universe, time period, transaction costs, and the optimized hyperparameters.
 
+# Reference
+[1] Jegadeesh, N., & Titman, S. (1993). *Returns to Buying Winners and Selling Losers: Implications for Stock Market Efficiency.*
 
-## What to Submit / Show (typical)
-- Config used (`config/config.yaml`)
-- In-sample results (baseline vs best)
-- Out-of-sample results (baseline vs best)
-- Optimization table (`optimization_results.csv`)
-- Short explanation of:
-  - hypothesis,
-  - feature definitions,
-  - backtest methodology (monthly rebalance + costs),
-  - key metrics and interpretation.
+[2] Moskowitz, T. J., Ooi, Y. H., & Pedersen, L. H. (2012). *Time Series Momentum.*
