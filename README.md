@@ -11,7 +11,6 @@ This project implements a **Price Momentum** trading strategy using a simplified
 
 We use daily market data to construct **monthly momentum & volatility features**, then run a **monthly rebalanced** backtest: at each month-end we select the **top-N tickers by momentum**, allocate weights (equal-weight or inverse-volatility), apply transaction costs based on turnover, and evaluate performance via metrics like **CAGR, volatility, Sharpe ratio, and max drawdown**.
 
----
 
 ## Strategy Overview (Momentum)
 **Hypothesis:** assets that performed well over the recent past tend to keep performing well over a short horizon.
@@ -27,7 +26,6 @@ We use daily market data to construct **monthly momentum & volatility features**
   - hold from **t → t+1**, realizing the next-month forward return (`fwd_ret_1m`)
   - subtract transaction cost proportional to **turnover**
 
----
 
 ## Installation
 ### 1) Create a virtual environment
@@ -42,7 +40,6 @@ source .venv/bin/activate   # macOS/Linux
 pip install -r requirements.txt
 ```
 
----
 
 ## Configuration
 Edit `config/config.yaml` to control:
@@ -53,7 +50,6 @@ Edit `config/config.yaml` to control:
 - **costs** (`commission`)
 - **universe filters** (`min_avg_daily_volume`, `min_price`)
 
----
 
 ## Data
 ### Data Collection
@@ -68,7 +64,6 @@ python run_data_collection.py
 Output:
 - `data/processed/daily_data.csv`
 
----
 
 ### Data Processing
 This step converts daily data into a monthly feature table used by the strategy backtest:
@@ -85,7 +80,6 @@ python run_data_processing.py
 Output:
 - `data/processed/monthly_features.csv`
 
----
 
 ## Backtesting
 ### In-sample Backtest
@@ -105,7 +99,6 @@ Outputs (baseline):
 - `data/processed/result_out_sample/baseline_returns.csv`
 - `data/processed/result_out_sample/baseline_weights.csv`
 
----
 
 ## Optimization
 ### Hyperparameter Search
@@ -124,7 +117,6 @@ Outputs:
 - `data/processed/optimization_results.csv`
 - `data/processed/best_params.yaml`
 
----
 
 ## Out-of-sample Backtest
 ### Evaluate Best Params on Out-of-sample
@@ -141,7 +133,6 @@ Outputs (best, if `best_params.yaml` exists):
 - `data/processed/result_out_sample/best_returns.csv`
 - `data/processed/result_out_sample/best_weights.csv`
 
----
 
 ## Notes / Troubleshooting
 - If you see `Missing daily CSV...`, run **data collection** first:
@@ -155,7 +146,6 @@ Outputs (best, if `best_params.yaml` exists):
 - If `weight_scheme = inv_vol`, make sure volatility lookback is valid and your feature file contains `vol_{vol_days}d`.
 - Universe filters (`min_avg_daily_volume`, `min_price`) can reduce the tradable set; if you get many “cash months”, loosen these thresholds.
 
----
 
 ## What to Submit / Show (typical)
 - Config used (`config/config.yaml`)
