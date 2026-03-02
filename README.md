@@ -1,85 +1,172 @@
-# Group04
+![Static Badge](https://img.shields.io/badge/PLUTUS-75%25-darkgreen)
+![Static Badge](https://img.shields.io/badge/GROUP04-Momentum-darkblue)
+
+# GROUP04 - Momentum Strategy (VN Stock Universe)
 
 ## Abstract
+This project implements a **Price Momentum** trading strategy using a simplified 6-step workflow for developing a trading algorithm:
+1) Form Algorithm Hypothesis  
+2) Data Collection  
+3) Data Processing / Feature Engineering  
+4) In-sample Backtesting  
+5) Optimization  
+6) Out-of-sample Backtesting  
 
+We use daily market data to construct **monthly momentum & volatility features**, then run a **monthly rebalanced** backtest: at each month-end we select the **top-N tickers by momentum**, allocate weights (equal-weight or inverse-volatility), apply transaction costs based on turnover, and evaluate performance via metrics like **CAGR, volatility, Sharpe ratio, and max drawdown**.
 
-## Introduction
+---
 
+## Strategy Overview (Momentum)
+**Hypothesis:** assets that performed well over the recent past tend to keep performing well over a short horizon.
 
-## Trading (Algorithm) Hypotheses
+**Monthly rebalancing logic:**
+- On each month-end date **t**:
+  - compute momentum over a lookback window (e.g., `mom_months = 3`)
+  - rank tickers by momentum
+  - pick **top_n**
+  - assign weights:
+    - `equal` (equal weights), or
+    - `inv_vol` (inverse-vol weights using a daily-volatility lookback)
+  - hold from **t → t+1**, realizing the next-month forward return (`fwd_ret_1m`)
+  - subtract transaction cost proportional to **turnover**
 
+---
 
-## Data
-Currently, we collect daily data of VN30F1M in one month based on the database from Assignment 2:
+## Installation
+### 1) Create a virtual environment
 ```bash
-data_collection:
-  start: "2023-01-01"
-  end: "2023-02-01"
-  tickers: ["HPG", "VIC", "VNM"]
+python3 -m venv .venv
+source .venv/bin/activate   # macOS/Linux
+# .venv\Scripts\activate    # Windows
 ```
-## Implementation
-### Environment Setup
-1. Set up python virtual environment
-```bash
-python -m venv .venv
-source .venv/Scripts/activate # for Window Git Bash
-```
-2. Install the required packages
+
+### 2) Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
+---
+
+## Configuration
+Edit `config/config.yaml` to control:
+- **data source / tickers** (`data_collection`)
+- **in-sample / out-of-sample periods** (`periods`)
+- **features** (e.g., `mom_months`, `vol_days`)
+- **portfolio rules** (`top_n`, `weight_scheme`, `max_weight`)
+- **costs** (`commission`)
+- **universe filters** (`min_avg_daily_volume`, `min_price`)
+
+---
+
+## Data
 ### Data Collection
-- For testing the implementation, run:
-```bash
-python -m src.data.export_daily --help
-```
+This step pulls daily data from the database and saves it to:
+`data/processed/daily_data.csv`
 
-- Download the database.json file from assignment 2 and put it in the project.
-
-- To start collecting daily data, run:
+Run:
 ```bash
 python run_data_collection.py
 ```
 
-### Data processing
+Output:
+- `data/processed/daily_data.csv`
 
+---
 
-### In-sample Backtesting
+### Data Processing
+This step converts daily data into a monthly feature table used by the strategy backtest:
+- momentum column: `mom_{mom_months}m`
+- volatility column: `vol_{vol_days}d`
+- forward return column: `fwd_ret_1m`
+- liquidity column: `avg_daily_volume`
 
+Run:
+```bash
+python run_data_processing.py
+```
 
-### Optimization
+Output:
+- `data/processed/monthly_features.csv`
 
+---
 
-### Out-of-sample Backtesting
+## Backtesting
+### In-sample Backtest
+Runs the baseline configuration defined in `config/config.yaml` and saves:
+- returns time series
+- monthly weights
+- prints metrics to console (CAGR, vol, Sharpe, max drawdown, avg turnover, etc.)
 
+Run:
+```bash
+python run_backtest.py
+```
 
-### Configurations
+Outputs (baseline):
+- `data/processed/result_in_sample/baseline_returns.csv`
+- `data/processed/result_in_sample/baseline_weights.csv`
+- `data/processed/result_out_sample/baseline_returns.csv`
+- `data/processed/result_out_sample/baseline_weights.csv`
 
+---
 
-## In-sample Backtesting
-### Stock Selection
+## Optimization
+### Hyperparameter Search
+A simple grid search over parameters:
+- `mom_months`
+- `vol_days`
+- `top_n`
+- `weight_scheme`
 
-### Rebalancing and Risk Management
+Run:
+```bash
+python run_optimization.py
+```
 
+Outputs:
+- `data/processed/optimization_results.csv`
+- `data/processed/best_params.yaml`
 
-### Evaluation Metrics
+---
 
-### Parameters
+## Out-of-sample Backtest
+### Evaluate Best Params on Out-of-sample
+After optimization, `run_backtest.py` will automatically detect `best_params.yaml` and run a second backtest tagged as **best**.
 
+Run:
+```bash
+python run_backtest.py
+```
 
-### In-sample Backtesting Result
+Outputs (best, if `best_params.yaml` exists):
+- `data/processed/result_in_sample/best_returns.csv`
+- `data/processed/result_in_sample/best_weights.csv`
+- `data/processed/result_out_sample/best_returns.csv`
+- `data/processed/result_out_sample/best_weights.csv`
 
+---
 
-### Optimization Result
+## Notes / Troubleshooting
+- If you see `Missing daily CSV...`, run **data collection** first:
+  ```bash
+  python run_data_collection.py
+  ```
+- If you changed `mom_months` or `vol_days`, re-run:
+  ```bash
+  python run_data_processing.py
+  ```
+- If `weight_scheme = inv_vol`, make sure volatility lookback is valid and your feature file contains `vol_{vol_days}d`.
+- Universe filters (`min_avg_daily_volume`, `min_price`) can reduce the tradable set; if you get many “cash months”, loosen these thresholds.
 
+---
 
-## Out-of-sample Backtesting
-
-
-### Out-of-sample Backtesting Result
-
-
-
-
-
+## What to Submit / Show (typical)
+- Config used (`config/config.yaml`)
+- In-sample results (baseline vs best)
+- Out-of-sample results (baseline vs best)
+- Optimization table (`optimization_results.csv`)
+- Short explanation of:
+  - hypothesis,
+  - feature definitions,
+  - backtest methodology (monthly rebalance + costs),
+  - key metrics and interpretation.
