@@ -1,7 +1,4 @@
-![Static Badge](https://img.shields.io/badge/PLUTUS-75%25-darkgreen)
-![Static Badge](https://img.shields.io/badge/GROUP04-Momentum-darkblue)
-
-# GROUP04 - Momentum Strategy (VN Stock Universe)
+# GROUP04 - Momentum Strategy
 
 ## Abstract
 This project implements a **Price Momentum** trading strategy using a simplified 6-step workflow for developing a trading algorithm:
