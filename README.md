@@ -120,10 +120,11 @@ Outputs (baseline):
 
 Metrics are printed to the console logs (CAGR, vol, Sharpe, max drawdown, avg turnover, etc.).
 
-Example result table (fill after running):
-| Strategy (baseline) | Sharpe Ratio | Maximum Drawdown | CAGR |
-|---------------------|--------------|------------------|------|
-| Momentum            | TBD          | TBD              | TBD  |
+**Actual result (2022 baseline):**
+
+| Strategy (baseline) | Sharpe Ratio | Maximum Drawdown | CAGR     |
+|---------------------|--------------|------------------|----------|
+| Momentum            | -0.63        | -26.68%          | -20.36%  |
 
 # Optimization
 Run in-sample optimization (grid search):
@@ -167,11 +168,13 @@ Outputs (best, if `best_params.yaml` exists):
 - `data/processed/result_out_sample/best_returns.csv`
 - `data/processed/result_out_sample/best_weights.csv`
 
-Example result table (fill after running):
-| Strategy | Sharpe Ratio | Maximum Drawdown | CAGR |
-|----------|--------------|------------------|------|
-| Baseline | TBD          | TBD              | TBD  |
-| Best     | TBD          | TBD              | TBD  |
+**Actual results (2023):**
+
+| Strategy       | Sharpe Ratio | Maximum Drawdown | CAGR     |
+|----------------|--------------|------------------|----------|
+| Baseline       | -0.01        | -19.51%          | -2.70%   |
+| Best (optimized) | -0.01      | -19.51%          | -2.70%   |
+> **Note**: Baseline and optimized versions showed virtually identical performance in 2023.
 
 # Conclusion
 This repository provides a transparent end-to-end implementation of a monthly-rebalanced **Momentum Strategy**: data export → feature engineering → backtesting → optimization → out-of-sample evaluation. The final results depend on the chosen universe, time period, transaction costs, and the optimized hyperparameters.
