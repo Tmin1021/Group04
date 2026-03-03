@@ -1,0 +1,2 @@
+mom_months,vol_days,top_n,weight_scheme,months,cagr,vol,sharpe,max_drawdown,avg_turnover
+3,60,5,inv_vol,12.0,-0.1889686125527743,0.2837356200075083,-0.6027783814055641,-0.26679007685139045,0.06899622391186448

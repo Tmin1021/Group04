@@ -1,0 +1,6 @@
+features:
+  mom_months: 3
+  vol_days: 60
+portfolio:
+  top_n: 5
+  weight_scheme: inv_vol
